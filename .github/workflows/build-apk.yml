@@ -5,40 +5,52 @@ on:
   push:
     paths:
       - 'HinaPlayzAndroid-Source.zip'
+      - '.github/workflows/build-apk.yml'
 
 permissions:
   contents: read
 
 jobs:
   build:
+    name: Build Android APK
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Extract project
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract Android project
         run: |
           unzip -q HinaPlayzAndroid-Source.zip -d .
           test -f HinaPlayzAndroid/settings.gradle.kts
+          echo "Project extracted successfully"
 
-      - uses: actions/setup-java@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-            - name: Accept Android SDK licenses
-        run: |
-          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)
-          yes | "$SDKMANAGER" --licenses
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          accept-android-sdk-licenses: true
+          packages: platform-tools
 
-      - uses: gradle/actions/setup-gradle@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Build APK
+      - name: Build HINA PLAYZ
         working-directory: HinaPlayzAndroid
         run: gradle assembleDebug
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: HINA-PLAYZ-APK
           path: HinaPlayzAndroid/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+          
