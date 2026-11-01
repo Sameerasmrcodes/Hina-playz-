@@ -16,40 +16,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Download repository files
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract Phase 3 Android project
+      # 2. Extract Phase 3 source code
+      - name: Extract Android project
         run: |
           unzip -q HINA-PLAYZ-Phase3-Navigation.zip -d .
           test -f HinaPlayzAndroid/settings.gradle.kts
           find HinaPlayzAndroid/app/src -name MainActivity.kt | grep -q .
-          echo "Phase 3 project extracted successfully"
+          echo "HINA PLAYZ source extracted successfully"
 
+      # 3. Setup Java 17
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
+      # 4. Setup Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
         with:
           accept-android-sdk-licenses: true
-          packages: |
-            platform-tools
-            platforms;android-35
-            build-tools;35.0.0
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
+      # 5. Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
+      # 6. Build APK
       - name: Build HINA PLAYZ
         working-directory: HinaPlayzAndroid
         run: gradle assembleDebug
 
+      # 7. Verify APK
+      - name: Verify APK
+        run: |
+          test -f HinaPlayzAndroid/app/build/outputs/apk/debug/app-debug.apk
+          echo "APK generated successfully"
+
+      # 8. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
