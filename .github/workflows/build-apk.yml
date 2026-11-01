@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'HinaPlayzAndroid-Source.zip'
+      - 'HINA-PLAYZ-Phase3-Navigation.zip'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -19,11 +19,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract Android project
+      - name: Extract Phase 3 Android project
         run: |
-          unzip -q HinaPlayzAndroid-Source.zip -d .
+          unzip -q HINA-PLAYZ-Phase3-Navigation.zip -d .
           test -f HinaPlayzAndroid/settings.gradle.kts
-          echo "Project extracted successfully"
+          test -f HinaPlayzAndroid/app/src/main/java/com/hinaplayz/app/MainActivity.kt
+          echo "Phase 3 project extracted successfully"
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -35,7 +36,10 @@ jobs:
         uses: android-actions/setup-android@v4
         with:
           accept-android-sdk-licenses: true
-          packages: platform-tools
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
