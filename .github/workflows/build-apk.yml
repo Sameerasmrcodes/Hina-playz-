@@ -23,7 +23,7 @@ jobs:
         run: |
           unzip -q HINA-PLAYZ-Phase3-Navigation.zip -d .
           test -f HinaPlayzAndroid/settings.gradle.kts
-          test -f HinaPlayzAndroid/app/src/main/java/com/hinaplayz/app/MainActivity.kt
+          find HinaPlayzAndroid/app/src -name MainActivity.kt | grep -q .
           echo "Phase 3 project extracted successfully"
 
       - name: Setup Java
