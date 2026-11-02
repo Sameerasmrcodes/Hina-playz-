@@ -31,7 +31,6 @@ jobs:
           ZIP_FILE="HINA-PLAYZ-Phase4-Fixed-Source.zip"
           test -f "$ZIP_FILE" || {
             echo "::error::Missing $ZIP_FILE in repository root."
-            echo "Upload the ZIP to the repository root with this exact filename."
             exit 1
           }
           unzip -t "$ZIP_FILE"
@@ -41,16 +40,16 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK packages
+      - name: Accept licenses and install Android SDK packages
+        shell: bash
         run: |
           set -euo pipefail
+          yes | sdkmanager --licenses
           sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-          yes | sdkmanager --licenses >/dev/null || true
 
       - name: Extract and validate project
         shell: bash
@@ -59,11 +58,10 @@ jobs:
           mkdir -p extracted
           unzip -q "HINA-PLAYZ-Phase4-Fixed-Source.zip" -d extracted
 
-          # Locate the Gradle project by its settings.gradle.kts file.
           mapfile -t SETTINGS_FILES < <(find extracted -type f -name settings.gradle.kts)
           if [ "${#SETTINGS_FILES[@]}" -ne 1 ]; then
             echo "::error::Expected exactly one settings.gradle.kts; found ${#SETTINGS_FILES[@]}."
-            find extracted -maxdepth 4 -type f | sort
+            find extracted -maxdepth 5 -type f | sort
             exit 1
           fi
 
@@ -71,8 +69,8 @@ jobs:
           test -f "$PROJECT_DIR/build.gradle.kts"
           test -f "$PROJECT_DIR/app/build.gradle.kts"
           test -f "$PROJECT_DIR/app/src/main/AndroidManifest.xml"
-          test -n "$(find "$PROJECT_DIR/app/src/main" -name 'MainActivity.kt' -print -quit)" || {
-            echo "::error::MainActivity.kt not found in app/src/main."
+          test -n "$(find "$PROJECT_DIR/app/src/main" -name MainActivity.kt -print -quit)" || {
+            echo "::error::MainActivity.kt not found."
             exit 1
           }
 
@@ -83,7 +81,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-          cache-read-only: false
 
       - name: Build debug APK
         shell: bash
@@ -97,7 +94,7 @@ jobs:
           set -euo pipefail
           APK_PATH="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK_PATH" || {
-            echo "::error::Build completed but APK was not found at $APK_PATH"
+            echo "::error::APK not found: $APK_PATH"
             exit 1
           }
           ls -lh "$APK_PATH"
@@ -112,3 +109,4 @@ jobs:
             apk-sha256.txt
           if-no-files-found: error
           retention-days: 14
+          
