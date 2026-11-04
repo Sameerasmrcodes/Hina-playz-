@@ -1,4 +1,3 @@
-
 name: Build HINA PLAYZ APK
 
 on:
@@ -46,12 +45,13 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           cmdline-tools-version: 13114758
+          accept-android-sdk-licenses: false
 
       - name: Accept licenses and install Android SDK packages
         shell: bash
         run: |
-          set -eo pipefail
-          yes | sdkmanager --licenses || true
+          set -eu
+          yes | sdkmanager --licenses
           sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Extract and validate project
@@ -62,19 +62,16 @@ jobs:
           unzip -q "HINA-PLAYZ-Phase4-Fixed-Source.zip" -d extracted
 
           mapfile -t SETTINGS_FILES < <(find extracted -type f -name settings.gradle.kts)
-
           if [ "${#SETTINGS_FILES[@]}" -ne 1 ]; then
-            echo "::error::Expected exactly one settings.gradle.kts"
+            echo "::error::Expected exactly one settings.gradle.kts; found ${#SETTINGS_FILES[@]}."
             find extracted -maxdepth 5 -type f | sort
             exit 1
           fi
 
           PROJECT_DIR="$(dirname "${SETTINGS_FILES[0]}")"
-
           test -f "$PROJECT_DIR/build.gradle.kts"
           test -f "$PROJECT_DIR/app/build.gradle.kts"
           test -f "$PROJECT_DIR/app/src/main/AndroidManifest.xml"
-
           test -n "$(find "$PROJECT_DIR/app/src/main" -name MainActivity.kt -print -quit)" || {
             echo "::error::MainActivity.kt not found."
             exit 1
@@ -99,12 +96,10 @@ jobs:
         run: |
           set -euo pipefail
           APK_PATH="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
-
           test -s "$APK_PATH" || {
             echo "::error::APK not found: $APK_PATH"
             exit 1
           }
-
           ls -lh "$APK_PATH"
           sha256sum "$APK_PATH" | tee apk-sha256.txt
 
